@@ -28,7 +28,7 @@ library(data.table)
 set.seed(42)
 source("_common.R")
 
-data_dir    <- "data"
+data_dir    <- "data_10kb"
 results_dir <- "results"
 fig_dir     <- file.path(results_dir, "figures")
 dir.create(fig_dir, recursive = TRUE, showWarnings = FALSE)

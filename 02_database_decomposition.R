@@ -26,7 +26,7 @@ library(data.table)
 
 set.seed(42)
 
-data_dir    <- "data"
+data_dir    <- "data_10kb"
 dirs        <- mfd_init_dirs()
 results_dir <- dirs$results_dir
 fig_dir     <- dirs$fig_dir

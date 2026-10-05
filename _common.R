@@ -19,12 +19,12 @@ suppressPackageStartupMessages({
 
 # Catalogue-level constants (GSVA; Graham et al. 2024)
 # Denominators for all "% of all viral genes" values.
-GSVA_TOTAL_VIRAL_GENES <- 1432147L
-GSVA_TOTAL_CONTIGS     <-   49649L
+GSVA_TOTAL_VIRAL_GENES <- 1238728L
+GSVA_TOTAL_CONTIGS     <-   31344L
 # Samples that carry >=1 viral gene: the source of the gene catalogue and the
 # denominator distinct-sample count, NOT the full sample set. Equals the number
 # of distinct sample IDs among the gene metadata.
-GSVA_N_SAMPLES         <-    1223L
+GSVA_N_SAMPLES         <-    1093L
 # Full soil-sample metadata (GSV Atlas File 5). Asserted against
 # nrow(GSVA_sample_metadata_5.csv) in scripts 04/05 where that file is loaded.
 GSVA_N_TOTAL_SAMPLES   <-    2953L
@@ -125,19 +125,21 @@ mfd_load_annotations <- function(data_dir = "data",
   n_broad <- post_lysis[evidence_type == "broad", .N]
   n_spec <- n_post - n_broad
 
-  # Fail-fast guards on the documented GSV Atlas totals: any change of input or
-  # filtering logic that silently moves these must stop the pipeline.
-  stopifnot(
-    n_raw  == 5760L,
-    n_post == 1858L,
-    n_spec == 1169L,
-    post_lysis[evidence_type == "specific" &
-                 functional_category == "carbon_cycling",   .N] == 1130L,
-    post_lysis[evidence_type == "specific" &
-                 functional_category == "nitrogen_cycling", .N] ==   25L,
-    post_lysis[evidence_type == "specific" &
-                 functional_category == "antibiotics",      .N] ==   14L
-  )
+  # Fail-fast guards on the documented GSV Atlas totals. Two input states are
+  # sanctioned: the full QA/QC catalogue (read by 01, the contig-length
+  # sensitivity analysis) and the >=10 kb primary catalogue (read by 02/03).
+  # The loaded set must match one of them exactly; any other count means the
+  # input or filtering logic moved silently, and the pipeline stops.
+  n_carbon <- post_lysis[evidence_type == "specific" &
+                           functional_category == "carbon_cycling",   .N]
+  n_nitro  <- post_lysis[evidence_type == "specific" &
+                           functional_category == "nitrogen_cycling", .N]
+  n_amr    <- post_lysis[evidence_type == "specific" &
+                           functional_category == "antibiotics",      .N]
+  got      <- c(n_raw, n_post, n_spec, n_carbon, n_nitro, n_amr)
+  full_set <- c(5760L, 1858L, 1169L, 1130L, 25L, 14L)   # all QA/QC contigs
+  ge10_set <- c(5020L, 1698L, 1067L, 1032L, 22L, 13L)   # >=10 kb contigs
+  stopifnot(identical(got, full_set) || identical(got, ge10_set))
 
   if (verbose) {
     cat("--- MetaFuncDecoder filtering chain -------------------------------\n")
