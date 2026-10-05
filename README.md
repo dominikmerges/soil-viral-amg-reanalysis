@@ -37,7 +37,7 @@ Rscript run_all.R
 ```
 
 Scripts are also runnable individually and in any order, except that all
-require `data/` to be populated, and 02/03/04/07 additionally require
+require `data/` to be populated, and 02/03/04/06/07 additionally require
 `data_10kb/` (run `00_filter_10kb.R` first). Outputs go to `results/`.
 
 ## Contig-length threshold
@@ -47,8 +47,12 @@ writes a filtered copy of the three GSV Atlas input tables to `data_10kb/`
 (31,344 contigs; 1,238,728 gene calls; 1,093 samples), and scripts 02, 03, 04
 and 07 read from it. `01_contig_length_stratification.R` reads the full `data/`
 and provides the contig-length sensitivity analysis across the 1–5, 5–10 and
-≥10 kb bins. `06_jgi_viral_contribution.R` uses the matched-JGI counts, which
-are length-agnostic, and also reads `data/`.
+≥10 kb bins. `06_jgi_viral_contribution.R` (Figure 3) also reads `data_10kb/`:
+`00_filter_10kb.R` restricts its viral gene counts to viral contigs ≥10 kb (the
+six matched studies' viral contigs are in the Atlas, keyed by IMG taxon-OID
+prefix), while the `total_kegg_genes` denominator — the whole assembled,
+bacterial-dominated metagenome — is left unchanged, since the ≥10 kb criterion
+concerns viral identification only.
 
 ## Scripts
 

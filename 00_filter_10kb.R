@@ -11,7 +11,12 @@
 # viral sequences; the primary inventory is therefore restricted to >=10 kb
 # contigs. The full catalogue is retained in data/ and is read by
 # 01_contig_length_stratification.R as the contig-length sensitivity analysis.
-# Script 06 (JGI viral contribution) is length-agnostic and also reads data/.
+# Script 06 (JGI viral contribution, Figure 3) reads data_10kb/: its viral gene
+# counts are restricted here to viral contigs >=10 kb (the six matched studies'
+# viral contigs are in the GSV Atlas, keyed by IMG taxon-OID prefix, so the same
+# contig_length used above also filters the Figure 3 numerator). The
+# total_kegg_genes denominator is the whole assembled metagenome and is left
+# unchanged, as the >=10 kb criterion concerns viral identification only.
 #
 # In:  data/GSVA_soil_viruses_genome_metadata_2.tsv.gz
 #      data/GSVA_soil_viruses_gene_metadata_4.tsv.gz
@@ -46,8 +51,40 @@ fwrite(genome_f, file.path(out_dir, "GSVA_soil_viruses_genome_metadata_2.tsv.gz"
 fwrite(genes_f,  file.path(out_dir, "GSVA_soil_viruses_gene_metadata_4.tsv.gz"),  sep = "\t")
 fwrite(ann_f,    file.path(out_dir, "metagenome_confidence_annotations.csv"))
 
+# --- Figure 3 (JGI): restrict viral counts to viral contigs >=10 kb ---------
+# The six matched studies' viral contigs are in the Atlas, keyed by the IMG
+# taxon-OID prefix of contig_id; viral_kegg_genes is recomputed as the number of
+# target-KO genes on a viral contig >=10 kb. total_kegg_genes (whole metagenome)
+# is left unchanged. A guard verifies the unfiltered recount reproduces the
+# transcribed viral_kegg_genes in data/jgi_targeted_counts.csv before filtering.
+jgi <- read.csv(file.path(in_dir, "jgi_targeted_counts.csv"),
+                comment.char = "#", stringsAsFactors = FALSE)
+genes[, prefix := sub("[.:].*$", "", contig_id)]
+vcount <- function(oid, ko, ge10) {
+  sel <- genes[prefix == oid & kegg_ortholog == ko]
+  if (ge10) sum(sel$contig_id %in% keep_contigs) else nrow(sel)
+}
+viral_all  <- mapply(function(o, k) vcount(as.character(o), k, FALSE),
+                     jgi$img_taxon_oid, jgi$ko_term)
+stopifnot(all(viral_all == jgi$viral_kegg_genes))   # reproduces the manuscript
+jgi$viral_kegg_genes <- mapply(function(o, k) vcount(as.character(o), k, TRUE),
+                               jgi$img_taxon_oid, jgi$ko_term)
+jgi_hdr <- c(
+  "# Gene counts for the six matched JGI studies, per targeted function.",
+  "# total_kegg_genes = genes with the given KO in the whole assembled metagenome (not length-filtered).",
+  "# viral_kegg_genes = subset on a viral contig >=10 kb (GSVA genome metadata contig_length; 2nd revision).",
+  "# Viral percentage is derived, not stored.")
+jgi_out <- file.path(out_dir, "jgi_targeted_counts.csv")
+writeLines(jgi_hdr, jgi_out)
+suppressWarnings(
+  write.table(jgi, jgi_out, sep = ",", row.names = FALSE, col.names = TRUE,
+              quote = FALSE, append = TRUE))
+cat(sprintf("JGI viral (>=10 kb)     %s -> %s\n",
+            paste(viral_all, collapse = "/"),
+            paste(jgi$viral_kegg_genes, collapse = "/")))
+
 # Length-agnostic inputs copied through unchanged.
-for (f in c("GSVA_sample_metadata_5.csv", "jgi_targeted_counts.csv",
+for (f in c("GSVA_sample_metadata_5.csv",
             "jgi_study_metadata.csv", "original_keyword_counts.csv")) {
   src <- file.path(in_dir, f)
   if (file.exists(src)) file.copy(src, file.path(out_dir, f), overwrite = TRUE)
