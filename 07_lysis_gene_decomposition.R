@@ -44,7 +44,7 @@ source("_common.R")
 dirs        <- mfd_init_dirs()
 results_dir <- dirs$results_dir
 fig_dir     <- dirs$fig_dir
-data_dir    <- "data"
+data_dir    <- "data_10kb"
 
 # Peptidoglycan hydrolase (endolysin) catalytic domains. Pfam accessions
 # verified against InterPro; CAZy families are the canonical phage endolysin
@@ -104,8 +104,8 @@ DUAL_USE_CAZY <- c("GH19",
 
 cat("--- loading ---------------------------------------------------------\n")
 
-annot_all <- mfd_load_raw(data_dir)                       # 5,760 MFD calls
-stopifnot(nrow(annot_all) == 5760L)
+annot_all <- mfd_load_raw(data_dir)                       # 5,020 MFD calls (>=10 kb)
+stopifnot(nrow(annot_all) == 5020L)
 annot_all[, evidence_type := fifelse(subcategories == "" | is.na(subcategories),
                                      "broad", "specific")]
 

@@ -4,9 +4,14 @@
 #
 # Working directory must be the repository root, with data/ populated as
 # described in README.md. Outputs are written to results/.
+#
+# 00_filter_10kb.R runs first: it builds data_10kb/ (contigs >=10 kb) from
+# data/. The primary analysis scripts (02, 03, 04, 07) read data_10kb/; the
+# contig-length sensitivity analysis (01) reads the full data/ (see README).
 # =============================================================================
 
 scripts <- c(
+  "00_filter_10kb.R",
   "01_contig_length_stratification.R",
   "02_database_decomposition.R",
   "03_database_support.R",

@@ -37,13 +37,29 @@ Rscript run_all.R
 ```
 
 Scripts are also runnable individually and in any order, except that all
-require `data/` to be populated. Outputs go to `results/`.
+require `data/` to be populated, and 02/03/04/06/07 additionally require
+`data_10kb/` (run `00_filter_10kb.R` first). Outputs go to `results/`.
+
+## Contig-length threshold
+
+The primary analysis is restricted to viral contigs ≥10 kb. `00_filter_10kb.R`
+writes a filtered copy of the three GSV Atlas input tables to `data_10kb/`
+(31,344 contigs; 1,238,728 gene calls; 1,093 samples), and scripts 02, 03, 04
+and 07 read from it. `01_contig_length_stratification.R` reads the full `data/`
+and provides the contig-length sensitivity analysis across the 1–5, 5–10 and
+≥10 kb bins. `06_jgi_viral_contribution.R` (Figure 3) also reads `data_10kb/`:
+`00_filter_10kb.R` restricts its viral gene counts to viral contigs ≥10 kb (the
+six matched studies' viral contigs are in the Atlas, keyed by IMG taxon-OID
+prefix), while the `total_kegg_genes` denominator — the whole assembled,
+bacterial-dominated metagenome — is left unchanged, since the ≥10 kb criterion
+concerns viral identification only.
 
 ## Scripts
 
 | Script | Produces |
 |---|---|
 | `_common.R` | Shared loading and filtering; sourced by 01, 02, 03, 07 |
+| `00_filter_10kb.R` | Builds `data_10kb/` (contigs ≥10 kb) read by the primary scripts 02/03/04/07 |
 | `01_contig_length_stratification.R` | Fig. S1 |
 | `02_database_decomposition.R` | Fig. S2, Tables S1, S3 |
 | `03_database_support.R` | Table 1, Table S14 |
@@ -68,6 +84,11 @@ specific     1,169   enzyme-resolved       0.08% of the catalogue
 only for the annotated-at-all rate and for the annotation-method comparison in
 `03_database_support.R`, where filtering one arm only would confound the
 change of tool with the change of filter.
+
+The counts above are the full QA/QC catalogue (read by `01`). Under the ≥10 kb
+primary restriction (`data_10kb/`, read by 02/03/04/07) the same chain gives
+raw 5,020 → post_lysis 1,698 → specific 1,067. The fail-fast guard in
+`_common.R` accepts either sanctioned state and stops on any other.
 
 ## Environment
 

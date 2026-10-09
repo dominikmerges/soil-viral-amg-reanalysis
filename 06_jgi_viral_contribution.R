@@ -7,7 +7,11 @@
 #
 # Styling follows 04_amg_distribution.R (theme_minimal, base 11, Brewer Set2).
 #
-# In:  data/jgi_targeted_counts.csv
+# Viral gene counts are restricted to viral contigs >=10 kb (built by
+# 00_filter_10kb.R into data_10kb/jgi_targeted_counts.csv); the total_kegg_genes
+# denominator is the whole assembled metagenome and is unchanged.
+#
+# In:  data_10kb/jgi_targeted_counts.csv
 # Out: results/figures/06_Figure3_composite.pdf
 #      results/figures/06_Figure3_composite.tiff
 #      results/06_sessionInfo.txt
@@ -22,7 +26,7 @@ results_dir <- "results"
 fig_dir     <- file.path(results_dir, "figures")
 dir.create(fig_dir, recursive = TRUE, showWarnings = FALSE)
 
-counts <- read.csv("data/jgi_targeted_counts.csv", comment.char = "#",
+counts <- read.csv("data_10kb/jgi_targeted_counts.csv", comment.char = "#",
                    stringsAsFactors = FALSE)
 
 dat <- data.frame(
@@ -77,10 +81,15 @@ dat_long$type_idx <- as.numeric(dat_long$Type)
 dat_long$xpos     <- dat_long$x_idx +
   (dat_long$type_idx - (n_type + 1) / 2) * dodge_total / n_type
 
+# Zero-safe log axis: a viral count of 0 (two studies after the >=10 kb filter)
+# is drawn as a zero-height bar at the baseline but still labelled "0".
+dat_long$Count_plot <- ifelse(dat_long$Count < log_baseline, log_baseline, dat_long$Count)
+dat_long$lab_y      <- ifelse(dat_long$Count < log_baseline, log_baseline, dat_long$Count)
+
 p_a <- ggplot(dat_long) +
   geom_rect(aes(xmin = xpos - bar_w / 2, xmax = xpos + bar_w / 2,
-                ymin = log_baseline, ymax = Count, fill = Type)) +
-  geom_text(aes(x = xpos, y = Count, label = Count),
+                ymin = log_baseline, ymax = Count_plot, fill = Type)) +
+  geom_text(aes(x = xpos, y = lab_y, label = Count),
             vjust = -0.3, size = 3, colour = "grey30") +
   scale_x_continuous(breaks = seq_along(levels(dat_long$x_label)),
                      labels = levels(dat_long$x_label)) +
